@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RequirementStatus {
+  IN_QUEUE
+  REVIEW
+  REVISION
+  APPROVAL
+}
+
+enum ReviewerRole {
+  BR
+  SARM
+}
+
+model BusinessRequirement {
+  id                           String  @id @default(uuid()) @db.Uuid
+  title                        String
+  as_is_process_rasci_file     String
+  problem_statement            String
+  problem_impact               String
+  root_cause                   String
+  current_solution             String
+  to_be_solution               String
+  to_be_process_rasci_kki_file String
+  value_creation               String
+  expected_completion_target   String
+  improvement_result           String
+  sign_off_vp_br_sarm          String
+
+  status         RequirementStatus @default(IN_QUEUE)
+  approval_br    Boolean           @default(false)
+  approval_sarm  Boolean           @default(false)
+
+  reviews RequirementReview[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RequirementReview {
+  id             String              @id @default(uuid()) @db.Uuid
+  requirement    BusinessRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  requirementId  String              @db.Uuid
+
+  role             ReviewerRole
+  comment          String
+  requestedChanges Boolean           @default(false)
+  attachment       String?
+  reviewerName     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([requirementId, role])
+  @@index([requirementId, createdAt])
+}
